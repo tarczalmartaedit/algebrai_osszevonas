@@ -1,0 +1,608 @@
+<!DOCTYPE html>
+<html lang="hu">
+<head>
+  <meta charset="UTF-8">
+  <title>Algebrai kifejezések összevonása</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      background: #f5f7fb;
+      margin: 0;
+      padding: 0;
+    }
+
+    .app-container {
+      max-width: 800px;
+      margin: 30px auto;
+      background: #ffffff;
+      border-radius: 16px;
+      padding: 24px 28px;
+      box-shadow: 0 8px 20px rgba(0,0,0,0.08);
+    }
+
+    h1 {
+      text-align: center;
+      margin-top: 0;
+      color: #1f3b57;
+    }
+
+    .subtitle {
+      text-align: center;
+      color: #44596f;
+      margin-bottom: 18px;
+      font-size: 0.95rem;
+    }
+
+    .controls {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 16px;
+      align-items: center;
+      justify-content: center;
+      margin-bottom: 18px;
+    }
+
+    .difficulty-group {
+      display: flex;
+      gap: 10px;
+      align-items: center;
+      flex-wrap: wrap;
+    }
+
+    .difficulty-group label {
+      margin-right: 10px;
+      font-size: 0.95rem;
+      color: #333;
+    }
+
+    button {
+      padding: 8px 16px;
+      border-radius: 999px;
+      border: none;
+      cursor: pointer;
+      font-size: 0.95rem;
+      background: #1f7a8c;
+      color: #fff;
+      transition: transform 0.05s ease, box-shadow 0.05s ease, background 0.2s;
+      box-shadow: 0 3px 6px rgba(0,0,0,0.15);
+    }
+
+    button:hover {
+      background: #145262;
+    }
+
+    button:active {
+      transform: translateY(1px);
+      box-shadow: 0 1px 3px rgba(0,0,0,0.2);
+    }
+
+    button:disabled {
+      opacity: 0.6;
+      cursor: not-allowed;
+      box-shadow: none;
+    }
+
+    .status-bar {
+      display: flex;
+      justify-content: space-between;
+      margin-bottom: 18px;
+      font-size: 0.95rem;
+      color: #1f3b57;
+      flex-wrap: wrap;
+      gap: 8px;
+    }
+
+    .status-item span {
+      font-weight: bold;
+    }
+
+    .problem-card {
+      background: #f0f4ff;
+      border-radius: 14px;
+      padding: 16px 18px;
+      margin-bottom: 16px;
+      border: 1px solid #d1dcff;
+    }
+
+    .problem-expression {
+      font-size: 1.4rem;
+      font-weight: bold;
+      text-align: center;
+      margin-bottom: 12px;
+      color: #1f3b57;
+    }
+
+    .input-row {
+      display: flex;
+      gap: 12px;
+      justify-content: center;
+      align-items: center;
+      flex-wrap: wrap;
+    }
+
+    .input-row input[type="text"] {
+      padding: 6px 10px;
+      font-size: 1.05rem;
+      min-width: 170px;
+      border-radius: 8px;
+      border: 1px solid #b6c2d9;
+    }
+
+    .message {
+      min-height: 1.4em;
+      margin-top: 10px;
+      font-size: 0.95rem;
+    }
+
+    .message.correct {
+      color: #1b7a34;
+      font-weight: bold;
+    }
+
+    .message.incorrect {
+      color: #b02a37;
+      font-weight: bold;
+    }
+
+    .chunk-feedback {
+      margin-top: 8px;
+      padding: 10px 12px;
+      border-radius: 10px;
+      font-size: 0.95rem;
+      background: #fff8e1;
+      border: 1px solid #ffe0a3;
+      color: #5b4100;
+      min-height: 1.4em;
+    }
+
+    .summary {
+      margin-top: 12px;
+      padding-top: 10px;
+      border-top: 1px dashed #d0d7e2;
+      font-size: 0.95rem;
+      color: #1f3b57;
+      min-height: 1.4em;
+    }
+
+    .footer-note {
+      margin-top: 18px;
+      font-size: 0.8rem;
+      text-align: center;
+      color: #7a8ba3;
+    }
+
+    @media (max-width: 600px) {
+      .app-container {
+        margin: 10px;
+        padding: 18px 16px;
+      }
+      .problem-expression {
+        font-size: 1.2rem;
+      }
+    }
+  </style>
+</head>
+<body>
+<div class="app-container">
+  <h1>Algebrai kifejezések összevonása</h1>
+  <div class="subtitle">
+    Válaszd ki a szintet, indíts egy 10 feladatból álló kört, majd egyszerűsítsd a kifejezéseket!
+  </div>
+
+  <div class="controls">
+    <div class="difficulty-group">
+      <strong>Szint:</strong>
+      <label>
+        <input type="radio" name="difficulty" value="1" checked>
+        1. szint – csak egynemű tagok (pl. 3x + 2x − x)
+      </label>
+      <label>
+        <input type="radio" name="difficulty" value="2">
+        2. szint – vegyes (betűs és szám) tagok (pl. 3x + 5 − x)
+      </label>
+    </div>
+    <button id="startRoundBtn">Új kör indítása</button>
+  </div>
+
+  <div class="status-bar">
+    <div class="status-item">Feladat: <span id="taskCounter">0 / 10</span></div>
+    <div class="status-item">Helyes megoldások: <span id="correctCounter">0</span></div>
+  </div>
+
+  <div class="problem-card">
+    <div class="problem-expression" id="expressionDisplay">
+      Nyomd meg az „Új kör indítása” gombot!
+    </div>
+    <div class="input-row">
+      <label for="answerInput">Egyszerűsített alak:</label>
+      <input type="text" id="answerInput" placeholder="pl. 5x vagy 4x+3" disabled>
+      <button id="checkBtn" disabled>Ellenőrzés</button>
+    </div>
+    <div class="message" id="resultMessage"></div>
+    <div class="chunk-feedback" id="chunkFeedback"></div>
+    <div class="summary" id="summaryMessage"></div>
+  </div>
+
+  <div class="footer-note">
+    Tipp: írj szóközök nélkül, pl. <strong>5x+3</strong> vagy <strong>−2x+4</strong>. A program csak elsőfokú kifejezéseket kezel.
+  </div>
+</div>
+
+<script>
+(function() {
+  const startRoundBtn = document.getElementById('startRoundBtn');
+  const checkBtn = document.getElementById('checkBtn');
+  const expressionDisplay = document.getElementById('expressionDisplay');
+  const answerInput = document.getElementById('answerInput');
+  const taskCounterSpan = document.getElementById('taskCounter');
+  const correctCounterSpan = document.getElementById('correctCounter');
+  const resultMessage = document.getElementById('resultMessage');
+  const chunkFeedback = document.getElementById('chunkFeedback');
+  const summaryMessage = document.getElementById('summaryMessage');
+
+  const praiseMessages = [
+    "Szuper munka! Csak így tovább! 🌟",
+    "Nagyon ügyesen dolgozol, hibátlan ez a sorozat! ✅",
+    "Remek! Látszik, hogy figyelsz és értesz hozzá. 👏",
+    "Tanár módra profi vagy ebben! 🎓",
+    "Ez már igazi matekmágia! ✨"
+  ];
+
+  const encourageMessages = [
+    "Ne add fel, minden hibából tanulsz! 💪",
+    "Szép próbálkozás! Figyelj jobban a jelekre, menni fog. 🙂",
+    "Semmi baj, gyakorolunk tovább, és egyre jobb lesz! 🔁",
+    "Már jó úton jársz, pár apróságra figyelj jobban! 🔍",
+    "A bátor próbálkozás fél siker – folytasd így! 💡"
+  ];
+
+  let currentDifficulty = 1;
+  let currentTask = 0;
+  let correctCount = 0;
+  let currentExpression = "";
+  let currentCorrectCanonical = "";
+  let tasksInCurrentChunk = 0;
+  let hadMistakeInCurrentChunk = false;
+  const tasksPerRound = 10;
+  const chunkSize = 3;
+  const variableSymbol = 'x'; // fixen x-et használunk
+
+  function getSelectedDifficulty() {
+    const radios = document.querySelectorAll('input[name="difficulty"]');
+    for (const r of radios) {
+      if (r.checked) return parseInt(r.value, 10);
+    }
+    return 1;
+  }
+
+  function randInt(min, max) {
+    return Math.floor(Math.random() * (max - min + 1)) + min;
+  }
+
+  function choice(arr) {
+    return arr[randInt(0, arr.length - 1)];
+  }
+
+  // Algebrai kifejezés generálás – 1. szint: csak egynemű tagok (pl. 3x + 2x − x)
+  function generateLevel1Expression() {
+    let numTerms = randInt(2, 4);
+    let coeffs = [];
+    let sum = 0;
+
+    for (let i = 0; i < numTerms; i++) {
+      let c;
+      do {
+        c = randInt(-9, 9);
+      } while (c === 0);
+      coeffs.push(c);
+      sum += c;
+    }
+
+    // Ne legyen 0x a végeredmény
+    if (sum === 0) {
+      return generateLevel1Expression();
+    }
+
+    const expr = buildExpressionFromCoeffs(coeffs, 0, variableSymbol);
+    const canonical = canonicalFromCoeffs(sum, 0, variableSymbol);
+    return { expression: expr, canonical };
+  }
+
+  // 2. szint: betűs + számtagok (pl. 3x + 5 − x)
+  function generateLevel2Expression() {
+    const numVarTerms = randInt(2, 3);
+    const numConstTerms = randInt(1, 2);
+
+    let coeffs = [];
+    let consts = [];
+
+    let sumCoeff = 0;
+    let sumConst = 0;
+
+    for (let i = 0; i < numVarTerms; i++) {
+      let c;
+      do {
+        c = randInt(-9, 9);
+      } while (c === 0);
+      coeffs.push({ type: 'var', value: c });
+      sumCoeff += c;
+    }
+
+    for (let i = 0; i < numConstTerms; i++) {
+      let k;
+      do {
+        k = randInt(-9, 9);
+      } while (k === 0);
+      consts.push({ type: 'const', value: k });
+      sumConst += k;
+    }
+
+    if (sumCoeff === 0 && sumConst === 0) {
+      return generateLevel2Expression();
+    }
+
+    // Összekeverjük a változós és számtagokat
+    let terms = coeffs.concat(consts);
+    for (let i = terms.length - 1; i > 0; i--) {
+      const j = randInt(0, i);
+      [terms[i], terms[j]] = [terms[j], terms[i]];
+    }
+
+    const expr = buildExpressionFromTermObjects(terms, variableSymbol);
+    const canonical = canonicalFromCoeffs(sumCoeff, sumConst, variableSymbol);
+    return { expression: expr, canonical };
+  }
+
+  function buildExpressionFromCoeffs(coeffArray, constValue, variable) {
+    let terms = [];
+    for (let c of coeffArray) {
+      terms.push({ type: 'var', value: c });
+    }
+    if (constValue !== 0) {
+      terms.push({ type: 'const', value: constValue });
+    }
+    return buildExpressionFromTermObjects(terms, variable);
+  }
+
+  function buildExpressionFromTermObjects(terms, variable) {
+    let result = "";
+    terms.forEach((t, index) => {
+      let sign = t.value >= 0 ? "+" : "-";
+      let absVal = Math.abs(t.value);
+
+      if (t.type === 'var') {
+        let termStr;
+        if (absVal === 1) {
+          termStr = variable;
+        } else {
+          termStr = absVal + variable;
+        }
+        if (index === 0) {
+          result += (t.value < 0 ? "-" : "") + termStr;
+        } else {
+          result += " " + sign + " " + termStr;
+        }
+      } else {
+        // const
+        let termStr = String(absVal);
+        if (index === 0) {
+          result += (t.value < 0 ? "-" : "") + termStr;
+        } else {
+          result += " " + sign + " " + termStr;
+        }
+      }
+    });
+
+    if (result === "") {
+      return "0";
+    }
+    return result;
+  }
+
+  function canonicalFromCoeffs(coef, constant, variable) {
+    if (coef === 0 && constant === 0) {
+      return "0";
+    }
+
+    let parts = [];
+
+    if (coef !== 0) {
+      if (coef === 1) {
+        parts.push(variable);
+      } else if (coef === -1) {
+        parts.push("-" + variable);
+      } else {
+        parts.push(String(coef) + variable);
+      }
+    }
+
+    if (constant !== 0) {
+      if (constant > 0 && parts.length > 0) {
+        parts.push("+" + String(constant));
+      } else {
+        parts.push(String(constant));
+      }
+    }
+
+    let result = parts.join("");
+    if (result[0] === "+") result = result.slice(1);
+    return result;
+  }
+
+  // Egyszerű parsoló: csak elsőfokú kifejezéseket kezel variableSymbol változóval és konstanssal
+  function parseLinearExpression(str, variable) {
+    if (!str) {
+      throw new Error("Üres kifejezés");
+    }
+
+    let s = str.replace(/\s+/g, "");
+    s = s.replace(/−/g, "-"); // esetleges hosszú mínusz jel
+
+    // Az elején legyen mindig jel
+    if (s[0] !== "+" && s[0] !== "-") {
+      s = "+" + s;
+    }
+
+    const termRegex = /[+\-][^+\-]+/g;
+    const matches = s.match(termRegex);
+    if (!matches) {
+      throw new Error("Nem értelmezhető kifejezés");
+    }
+
+    let coef = 0;
+    let constant = 0;
+
+    for (let term of matches) {
+      let sign = term[0] === "-" ? -1 : 1;
+      let body = term.slice(1);
+
+      if (body.includes(variable)) {
+        const parts = body.split(variable);
+        let numPart = parts[0];
+        let num;
+
+        if (numPart === "") {
+          num = 1;
+        } else if (numPart === "-") {
+          num = -1;
+        } else if (numPart === "+") {
+          num = 1;
+        } else {
+          num = Number(numPart);
+          if (Number.isNaN(num)) {
+            throw new Error("Rosszul megadott együttható: " + term);
+          }
+        }
+        coef += sign * num;
+      } else {
+        let num = Number(body);
+        if (Number.isNaN(num)) {
+          throw new Error("Rosszul megadott konstans tag: " + term);
+        }
+        constant += sign * num;
+      }
+    }
+
+    return { coef, constant };
+  }
+
+  function canonicalizeUserInput(str, variable) {
+    const parsed = parseLinearExpression(str, variable);
+    return canonicalFromCoeffs(parsed.coef, parsed.constant, variable);
+  }
+
+  function startNewRound() {
+    currentDifficulty = getSelectedDifficulty();
+    currentTask = 0;
+    correctCount = 0;
+    tasksInCurrentChunk = 0;
+    hadMistakeInCurrentChunk = false;
+    chunkFeedback.textContent = "";
+    summaryMessage.textContent = "";
+    correctCounterSpan.textContent = "0";
+    updateTaskCounter();
+
+    answerInput.disabled = false;
+    checkBtn.disabled = false;
+
+    resultMessage.textContent = "";
+    resultMessage.className = "message";
+
+    generateNewTask();
+    answerInput.focus();
+  }
+
+  function generateNewTask() {
+    let generated;
+    if (currentDifficulty === 1) {
+      generated = generateLevel1Expression();
+    } else {
+      generated = generateLevel2Expression();
+    }
+    currentExpression = generated.expression;
+    currentCorrectCanonical = generated.canonical;
+
+    expressionDisplay.textContent = currentExpression;
+    answerInput.value = "";
+    resultMessage.textContent = "";
+    resultMessage.className = "message";
+  }
+
+  function updateTaskCounter() {
+    taskCounterSpan.textContent = currentTask + " / " + tasksPerRound;
+  }
+
+  function handleCheck() {
+    if (currentTask >= tasksPerRound) return;
+
+    const userAnswer = answerInput.value.trim();
+    if (!userAnswer) {
+      resultMessage.textContent = "Írd be az egyszerűsített kifejezést!";
+      resultMessage.className = "message incorrect";
+      return;
+    }
+
+    let userCanonical;
+    try {
+      userCanonical = canonicalizeUserInput(userAnswer, variableSymbol);
+    } catch (e) {
+      resultMessage.textContent = "Nem sikerült értelmezni a választ. Próbáld meg egyszerűbben (pl. 5x+3)!";
+      resultMessage.className = "message incorrect";
+      hadMistakeInCurrentChunk = true;
+      // Nem lépünk tovább, a tanuló javíthatja
+      return;
+    }
+
+    if (userCanonical === currentCorrectCanonical) {
+      correctCount++;
+      correctCounterSpan.textContent = String(correctCount);
+      resultMessage.textContent = "Helyes! ✅";
+      resultMessage.className = "message correct";
+    } else {
+      resultMessage.textContent = "Sajnos nem ez a helyes megoldás. A jó megoldás: " + currentCorrectCanonical;
+      resultMessage.className = "message incorrect";
+      hadMistakeInCurrentChunk = true;
+    }
+
+    currentTask++;
+    tasksInCurrentChunk++;
+    updateTaskCounter();
+
+    // 3 feladatonként visszajelzés
+    if (tasksInCurrentChunk === chunkSize || currentTask === tasksPerRound) {
+      let msg;
+      if (!hadMistakeInCurrentChunk) {
+        msg = choice(praiseMessages);
+      } else {
+        msg = choice(encourageMessages);
+      }
+      chunkFeedback.textContent = msg;
+      tasksInCurrentChunk = 0;
+      hadMistakeInCurrentChunk = false;
+    }
+
+    if (currentTask >= tasksPerRound) {
+      // kör vége
+      summaryMessage.textContent =
+        "Kör vége! " + correctCount + " / " + tasksPerRound + " feladat sikerült helyesen.";
+      expressionDisplay.textContent = "Kattints az „Új kör indítása” gombra a folytatáshoz.";
+      answerInput.disabled = true;
+      checkBtn.disabled = true;
+    } else {
+      generateNewTask();
+      answerInput.focus();
+    }
+  }
+
+  startRoundBtn.addEventListener('click', startNewRound);
+  checkBtn.addEventListener('click', handleCheck);
+
+  answerInput.addEventListener('keydown', function(e) {
+    if (e.key === "Enter" && !checkBtn.disabled) {
+      handleCheck();
+    }
+  });
+})();
+</script>
+</body>
+</html>
