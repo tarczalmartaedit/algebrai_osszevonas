@@ -1,0 +1,1 @@
+# algebrai_osszevonas
